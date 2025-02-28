@@ -1,0 +1,26 @@
+<h2>Gerador de Entidades</h2>
+
+<table border="1">
+  <thead>
+    <tr>
+      <th>Nome do Atributo</th>
+      <th>Tipo</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let atributo of atributos; let i = index">
+      <td>
+        <input [(ngModel)]="atributo.nome" placeholder="Nome do atributo">
+      </td>
+      <td>
+        <input [(ngModel)]="atributo.tipo" placeholder="Tipo (ex: String, Integer)">
+      </td>
+      <td>
+        <button (click)="removerAtributo(i)">Remover</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<button (click)="adicionarAtributo()">Adicionar Atributo</button>
