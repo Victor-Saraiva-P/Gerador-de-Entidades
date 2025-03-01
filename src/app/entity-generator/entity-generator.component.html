@@ -1,26 +1,189 @@
-<h2>Gerador de Entidades</h2>
+<div class="container">
+  <h2>Java Entity Generator</h2>
+  
+  <div class="entity-name mb-4">
+    <label for="entityName" class="form-label">Entity Name:</label>
+    <input type="text" id="entityName" class="form-control" [(ngModel)]="entityName" (ngModelChange)="onEntityNameChange()" placeholder="e.g. User">
+  </div>
 
-<table border="1">
-  <thead>
-    <tr>
-      <th>Nome do Atributo</th>
-      <th>Tipo</th>
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let atributo of atributos; let i = index">
-      <td>
-        <input [(ngModel)]="atributo.nome" placeholder="Nome do atributo">
-      </td>
-      <td>
-        <input [(ngModel)]="atributo.tipo" placeholder="Tipo (ex: String, Integer)">
-      </td>
-      <td>
-        <button (click)="removerAtributo(i)">Remover</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+  <div class="attributes-section">
+    <h3>Entity Attributes</h3>
+    <button class="btn btn-primary mb-3" (click)="adicionarAtributo()">Add Attribute</button>
+    
+    <div *ngFor="let atributo of atributos; let i = index" class="attribute-card mb-3 p-3 border rounded">
+      <div class="d-flex justify-content-between">
+        <h4>Attribute #{{i + 1}}</h4>
+        <button class="btn btn-danger btn-sm" (click)="removerAtributo(i)">Remove</button>
+      </div>
 
-<button (click)="adicionarAtributo()">Adicionar Atributo</button>
+      <div class="row mb-2">
+        <div class="col-md-6">
+          <label for="nome{{i}}" class="form-label">Name:</label>
+          <input type="text" id="nome{{i}}" class="form-control" [(ngModel)]="atributo.nome" placeholder="attributeName">
+        </div>
+        <div class="col-md-6">
+          <label for="tipo{{i}}" class="form-label">Type:</label>
+          <select id="tipo{{i}}" class="form-select" [(ngModel)]="atributo.tipo" (change)="onTipoChange(atributo)">
+            <option *ngFor="let tipo of tiposDisponiveis" [value]="tipo">{{tipo}}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- JPA Annotations -->
+      <div class="annotation-section mb-3">
+        <h5 (click)="toggleSection($event)">JPA Annotations</h5>
+        
+        <div class="collapsible-section">
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="isId{{i}}" [(ngModel)]="atributo.isId" (ngModelChange)="onAttributeChange()">
+            <label class="form-check-label" for="isId{{i}}">&#64;Id</label>
+          </div>
+          
+          <div *ngIf="atributo.isId" class="ms-4 mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="hasGeneratedValue{{i}}">
+              <label class="form-check-label" for="hasGeneratedValue{{i}}">&#64;GeneratedValue</label>
+            </div>
+            
+            <div class="ms-4 mb-2">
+              <label for="generationType{{i}}" class="form-label">Strategy:</label>
+              <select id="generationType{{i}}" class="form-select" [(ngModel)]="atributo.generationType">
+                <option *ngFor="let genType of generationTypes" [value]="genType">{{genType}}</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="isColumn{{i}}" [(ngModel)]="atributo.isColumn">
+            <label class="form-check-label" for="isColumn{{i}}">&#64;Column</label>
+          </div>
+          
+          <div *ngIf="atributo.isColumn" class="ms-4 mb-3">
+            <div class="row mb-2">
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="nullable{{i}}" [ngModel]="!atributo.nullable" (ngModelChange)="atributo.nullable = !$event">
+                  <label class="form-check-label" for="nullable{{i}}">nullable = false</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="unique{{i}}" [(ngModel)]="atributo.unique">
+                  <label class="form-check-label" for="unique{{i}}">unique = true</label>
+                </div>
+              </div>
+            </div>
+            
+            <div *ngIf="atributo.tipo === 'String'">
+              <label for="length{{i}}" class="form-label">Length:</label>
+              <input type="number" id="length{{i}}" class="form-control" [(ngModel)]="atributo.length" placeholder="255">
+            </div>
+            
+            <div *ngIf="['BigDecimal', 'Double', 'Float'].includes(atributo.tipo)" class="row">
+              <div class="col-md-6">
+                <label for="precision{{i}}" class="form-label">Precision:</label>
+                <input type="number" id="precision{{i}}" class="form-control" [(ngModel)]="atributo.precision">
+              </div>
+              <div class="col-md-6">
+                <label for="scale{{i}}" class="form-label">Scale:</label>
+                <input type="number" id="scale{{i}}" class="form-control" [(ngModel)]="atributo.scale">
+              </div>
+            </div>
+          </div>
+          
+          <!-- Enum Type -->
+          <div *ngIf="atributo.tipo === 'Enum'">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="isEnum{{i}}" [(ngModel)]="atributo.isEnum" checked disabled>
+              <label class="form-check-label" for="isEnum{{i}}">&#64;Enumerated</label>
+            </div>
+            
+            <div class="ms-4 mb-3">
+              <label for="enumType{{i}}" class="form-label">EnumType:</label>
+              <select id="enumType{{i}}" class="form-select" [(ngModel)]="atributo.enumType">
+                <option *ngFor="let enumType of enumTypes" [value]="enumType">{{enumType}}</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Temporal Type -->
+          <div *ngIf="['Date', 'LocalDate', 'LocalDateTime'].includes(atributo.tipo)">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="isTemporal{{i}}">
+              <label class="form-check-label" for="isTemporal{{i}}">&#64;Temporal</label>
+            </div>
+            
+            <div class="ms-4 mb-3">
+              <label for="temporalType{{i}}" class="form-label">TemporalType:</label>
+              <select id="temporalType{{i}}" class="form-select" [(ngModel)]="atributo.temporalType">
+                <option *ngFor="let tempType of temporalTypes" [value]="tempType">{{tempType}}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bean Validation -->
+      <div class="validation-section">
+        <h5 (click)="toggleSection($event)">Bean Validation</h5>
+        
+        <div class="collapsible-section">
+          <div class="row mb-2">
+            <div class="col-md-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="notNull{{i}}" [(ngModel)]="atributo.notNull">
+                <label class="form-check-label" for="notNull{{i}}">&#64;NotNull</label>
+              </div>
+            </div>
+            
+            <div class="col-md-4" *ngIf="['String'].includes(atributo.tipo)">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="notEmpty{{i}}" [(ngModel)]="atributo.notEmpty">
+                <label class="form-check-label" for="notEmpty{{i}}">&#64;NotEmpty</label>
+              </div>
+            </div>
+            
+            <div class="col-md-4" *ngIf="['String'].includes(atributo.tipo)">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="notBlank{{i}}" [(ngModel)]="atributo.notBlank">
+                <label class="form-check-label" for="notBlank{{i}}">&#64;NotBlank</label>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngIf="['String'].includes(atributo.tipo)">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="email{{i}}" [(ngModel)]="atributo.email">
+              <label class="form-check-label" for="email{{i}}">&#64;Email</label>
+            </div>
+            
+            <div class="mb-3">
+              <label for="pattern{{i}}" class="form-label">Pattern:</label>
+              <input type="text" id="pattern{{i}}" class="form-control" [(ngModel)]="atributo.pattern" placeholder="Regular expression">
+            </div>
+          </div>
+          
+          <div *ngIf="['Integer', 'Long', 'Double', 'Float', 'BigDecimal'].includes(atributo.tipo)" class="row mb-3">
+            <div class="col-md-6">
+              <label for="min{{i}}" class="form-label">&#64;Min:</label>
+              <input type="number" id="min{{i}}" class="form-control" [(ngModel)]="atributo.min">
+            </div>
+            <div class="col-md-6">
+              <label for="max{{i}}" class="form-label">&#64;Max:</label>
+              <input type="number" id="max{{i}}" class="form-control" [(ngModel)]="atributo.max">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="generate-section mt-4">
+    <button class="btn btn-success" (click)="gerarCodigoEntity(entityName)">Generate Entity</button>
+  </div>
+
+  <div class="generated-code mt-4" *ngIf="generatedCode">
+    <h3>Generated Entity Code:</h3>
+    <pre class="border p-3 bg-light"><code>{{generatedCode}}</code></pre>
+  </div>
+</div>
